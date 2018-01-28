@@ -88,8 +88,8 @@ public class VoxelWorld : MonoBehaviour
         //float noisex = fn.GetSimplex(pos.x * 100f, pos.y * 100f, pos.z * 100f);
         //Vector3 offset = new Vector3(noisex, noisex, noisex);
 
-        System.Random r = new System.Random(Mathf.FloorToInt(pos.x + pos.y + pos.z));
-        Vector3 offset = new Vector3((float)r.NextDouble(), (float)r.NextDouble(), (float)r.NextDouble());
-        return pos + (offset / 5f);
+        //System.Random r = new System.Random(Mathf.FloorToInt(pos.x + pos.y + pos.z));
+        //Vector3 offset = new Vector3((float)r.NextDouble(), (float)r.NextDouble(), (float)r.NextDouble());
+        return pos;// + (offset / 5f);
     }
 }
