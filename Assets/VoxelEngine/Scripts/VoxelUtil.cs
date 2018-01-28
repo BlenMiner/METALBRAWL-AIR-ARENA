@@ -248,7 +248,7 @@ public struct VMesh
 public struct VMap
 {
     public const int undergroundBlocks = 10;
-    public const int montainsMaxHeight = 10;
+    public const int montainsMaxHeight = 50;
 
     public uint size;
     public VoxelChunk chunk;
