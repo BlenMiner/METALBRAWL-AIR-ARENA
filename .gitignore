@@ -2,6 +2,7 @@
 ## Eclipse
 #################
 
+Library/*
 Temp/*
 *.pydevproject
 .project
