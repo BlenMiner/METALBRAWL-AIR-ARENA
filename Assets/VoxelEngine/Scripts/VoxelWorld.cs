@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 
 public class VoxelWorld : MonoBehaviour
@@ -13,6 +14,8 @@ public class VoxelWorld : MonoBehaviour
     public int mapSize = 10;
     public GameObject chunkPrefab;
 
+    public Thread mainThread;
+
     private void Awake()
     {
         if (singleton != null)
@@ -22,6 +25,9 @@ public class VoxelWorld : MonoBehaviour
         }
 
         singleton = this;
+
+        mainThread = new Thread(VoxelUpdate);
+        mainThread.Start();
     }
     
     IEnumerator Start ()
@@ -43,17 +49,17 @@ public class VoxelWorld : MonoBehaviour
 
         yield return 0;
 
-        foreach(var c in VoxelChunk.chunks)
+        /*foreach(var c in VoxelChunk.chunks)
         {
-            c.Value.CreateMap();
+            VThread.RunThread(c.Value.CreateMap);
         }
 
         yield return 0;
 
         foreach (var c in VoxelChunk.chunks)
         {
-            c.Value.CreateMesh(null);
-        }
+            VThread.RunThread(c.Value.CreateMesh);
+        }*/
     }
 
     public static void QueueDirtyChunk(VoxelChunk c)
@@ -64,11 +70,38 @@ public class VoxelWorld : MonoBehaviour
     private void Update()
     {
         time = Time.time;
-        while (dirtyChuncks.Count != 0)
+        if (dirtyChuncks.Count != 0)
         {
             VoxelChunk chunk = dirtyChuncks.Dequeue();
-            if (chunk == null) continue;
-            UpdateChunk(chunk);
+            if (chunk != null)
+                UpdateChunk(chunk);
+        }
+    }
+
+    private void VoxelUpdate()
+    {
+        while(true)
+        {
+            try
+            {
+                foreach (var c in VoxelChunk.chunks)
+                {
+                    if (!c.Value.map.startedGenerating)
+                    {
+                        c.Value.CreateMap(null);
+                    }
+
+                    if( c.Value.chunkDirty &&
+                        c.Value.map.isReady &&
+                        c.Value.chunkReady)
+                    {
+                        c.Value.CreateMesh(null);
+                    }
+                }
+            }
+            catch { }
+
+            Thread.Sleep(50);
         }
     }
 
@@ -79,17 +112,17 @@ public class VoxelWorld : MonoBehaviour
     }
 
     static FastNoise fn = new FastNoise(0);
-    public static Vector3 TransformPoint(Vector3 pos)
+    public static Vector3 TransformPoint(VoxelChunk c, Vector3 pos)
     {
-        /*float noisex = fn.GetSimplex(pos.x, pos.y, pos.z) * 10f;
-        float noisey = fn.GetSimplex(pos.y, pos.x, pos.z) * 10f;
-        float noisez = fn.GetSimplex(pos.x, pos.z, pos.y) * 10f;*/
+        Vector3 worldpos = pos + c.myPosition;
+        
+        System.Random r = new System.Random(Mathf.FloorToInt(worldpos.x + worldpos.z) * (int)worldpos.y);
+        Vector3 offset = new Vector3((float)(r.NextDouble() - 0.5f), 0, (float)(r.NextDouble() - 0.5f));
+        return pos + (offset / 5f);
+    }
 
-        //float noisex = fn.GetSimplex(pos.x * 100f, pos.y * 100f, pos.z * 100f);
-        //Vector3 offset = new Vector3(noisex, noisex, noisex);
-
-        //System.Random r = new System.Random(Mathf.FloorToInt(pos.x + pos.y + pos.z));
-        //Vector3 offset = new Vector3((float)r.NextDouble(), (float)r.NextDouble(), (float)r.NextDouble());
-        return pos;// + (offset / 5f);
+    private void OnDestroy()
+    {
+        mainThread.Interrupt();
     }
 }

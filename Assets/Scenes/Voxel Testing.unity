@@ -191,6 +191,8 @@ GameObject:
   - component: {fileID: 1515432749}
   - component: {fileID: 1515432748}
   - component: {fileID: 1515432752}
+  - component: {fileID: 1515432753}
+  - component: {fileID: 1515432754}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -228,7 +230,7 @@ Camera:
     y: 0
     width: 1
     height: 1
-  near clip plane: 0.3
+  near clip plane: 0.01
   far clip plane: 1000
   field of view: 60
   orthographic: 0
@@ -273,6 +275,69 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   profile: {fileID: 11400000, guid: 373440863c9714a4480531034b03a416, type: 2}
+--- !u!114 &1515432753
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1515432747}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3cd71d721c44d7a49a5987490ddb52d9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  colorbleedShader: {fileID: 4800000, guid: 1d5a99c088326d24c97739940f7b7778, type: 3}
+  Radius: 0.37
+  Quality: 32
+  Saturation: 1
+  BlurSize: 5
+  EnhancedBlur: 1
+  Deviation: 2.38
+  distanceAttPower: 2
+  distanceAtt: 1
+  cosineAtt: 1
+  OutputCBOnly: 0
+  DoBlur: 1
+  AdaptiveType: 1
+  AdaptiveQualityCoefficient: 1
+  CullingPrepassMode: 2
+  IsLumaSensitive: 0
+  LumaTreshold: 0.7
+  LumaKneeLinearity: 3
+  LumaKneeWidth: 0.3
+  LuminanceMode: 1
+  ColorBleedPower: 6.65
+  ColorBleedPresence: 1
+  ColorBleedBrightness: 0.175
+  GiBackfaces: 0
+  RaymarchStepsCount: 4
+  Downsampling: 1
+  Algorithm: 0
+  FarPlaneSource: 1
+  CommandBufferEnabled: 0
+  IntermediateScreenTextureFormat: 0
+  UseGBuffer: 0
+  ForcedSwitchPerformed: 1
+  ForcedSwitchPerformedSinglePassStereo: 0
+  ForcedSwitchPerformedGBufferDeferredSinglePassStereo: 0
+  CameraEvent: 12
+  BackfacesRadiusMultiplier: 0.3
+--- !u!114 &1515432754
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1515432747}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e75f3a26fbd09844bd9a26a4c94f8df, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cameraSensitivity: 150
+  climbSpeed: 4
+  normalMoveSpeed: 10
+  slowMoveFactor: 0.25
+  fastMoveFactor: 3
 --- !u!1 &2080100495
 GameObject:
   m_ObjectHideFlags: 0
@@ -313,6 +378,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b7391be00755b244fa31d7344ce99b75, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mapSize: 5
+  mapSize: 10
   chunkPrefab: {fileID: 1051263540645296, guid: 689dea67e3dc18841ba3bea37663eec2,
     type: 2}

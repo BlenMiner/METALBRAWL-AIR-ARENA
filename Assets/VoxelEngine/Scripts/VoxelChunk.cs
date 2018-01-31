@@ -19,21 +19,51 @@ public class VoxelChunk : MonoBehaviour
 
     public VMap map;
     public VMesh mesh;
-    
+
+    [System.NonSerialized]
+    public bool chunkDirty = false;
+    public bool chunkReady
+    {
+        get
+        {
+            VoxelChunk c0 = GetChunck(myPosition + new Vector3(chunkSize, 0, 0));
+            VoxelChunk c1 = GetChunck(myPosition + new Vector3(-chunkSize, 0, 0));
+            VoxelChunk c2 = GetChunck(myPosition + new Vector3(0, 0, chunkSize));
+            VoxelChunk c3 = GetChunck(myPosition + new Vector3(0, 0, -chunkSize));
+            VoxelChunk c4 = GetChunck(myPosition + new Vector3(0, chunkSize, 0));
+
+            Vector3 down = myPosition + new Vector3(0, -chunkSize, 0);
+            VoxelChunk c5 = GetChunck(myPosition + new Vector3(0, -chunkSize, 0));
+
+            return
+                c0 != null && c1 != null && c2 != null &&
+                c3 != null && c4 != null && (down.y < 0 || c5 != null) &&
+                c0.map.isReady &&
+                c1.map.isReady &&
+                c2.map.isReady &&
+                c3.map.isReady &&
+                c4.map.isReady &&
+                (down.y < 0 || c5.map.isReady);
+        }
+    }
+
     void Awake()
     {
         myPosition = transform.position;
         chunks.Add(myPosition, this);
     }
-
-    public void CreateMap()
+    
+    public void CreateMap(object arg)
     {
+        chunkDirty = true;
+
         map = new VMap(chunkSize * blocksPerUnit, this);
         map.GenMap();
     }
     public void CreateMesh(object lod)
     {
         threadReady = false;
+        chunkDirty = false;
 
         VMesh mesh = new VMesh(this);
         
@@ -114,7 +144,7 @@ public class VoxelChunk : MonoBehaviour
                 }
             }
         }
-
+        
         mesh.GenArrays();
         this.mesh = mesh;
 

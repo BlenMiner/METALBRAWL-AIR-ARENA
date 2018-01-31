@@ -285,6 +285,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\_Packages (Asset Store)\WilberforceColorbleed\Assets\Scripts\Colorbleed.cs" />
     <Compile Include="Assets\PostProcessing\Runtime\Attributes\GetSetAttribute.cs" />
     <Compile Include="Assets\PostProcessing\Runtime\Attributes\MinAttribute.cs" />
     <Compile Include="Assets\PostProcessing\Runtime\Attributes\TrackballAttribute.cs" />
@@ -330,6 +331,7 @@
     <Compile Include="Assets\PostProcessing\Runtime\Utils\MaterialFactory.cs" />
     <Compile Include="Assets\PostProcessing\Runtime\Utils\RenderTextureFactory.cs" />
     <Compile Include="Assets\PostProcessing\Utilities\CustomMotionTexture\ExampleWheelController.cs" />
+    <Compile Include="Assets\Scripts\Misc\ExtendedFlycam.cs" />
     <Compile Include="Assets\VoxelEngine\Libraries\FastNoise.cs" />
     <Compile Include="Assets\VoxelEngine\Scripts\VoxelChunk.cs" />
     <Compile Include="Assets\VoxelEngine\Scripts\VoxelUtil.cs" />
@@ -378,6 +380,8 @@
     <None Include="Assets\PostProcessing\Resources\Shaders\UberSecondPass.cginc" />
     <None Include="Assets\PostProcessing\Utilities\CustomMotionTexture\Shaders\CustomMotionVectorTexture.shader" />
     <None Include="Assets\VoxelEngine\Materials\StdVertexColor.shader" />
+    <None Include="Assets\_Packages (Asset Store)\WilberforceColorbleed\Assets\Shaders\Colorbleed.shader" />
+    <None Include="Assets\_Packages (Asset Store)\WilberforceColorbleed\Documentation\ReadMe.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="GenerateTargetFrameworkMonikerAttribute" />

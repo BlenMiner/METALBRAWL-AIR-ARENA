@@ -178,10 +178,10 @@ public struct VMesh
 
     public void AddQuad(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3, Vector3 normal)
     {
-        int v0 = AddVert(VoxelWorld.TransformPoint(p0));
-        int v1 = AddVert(VoxelWorld.TransformPoint(p1));
-        int v2 = AddVert(VoxelWorld.TransformPoint(p2));
-        int v3 = AddVert(VoxelWorld.TransformPoint(p3));
+        int v0 = AddVert(VoxelWorld.TransformPoint(c, p0));
+        int v1 = AddVert(VoxelWorld.TransformPoint(c, p1));
+        int v2 = AddVert(VoxelWorld.TransformPoint(c, p2));
+        int v3 = AddVert(VoxelWorld.TransformPoint(c, p3));
 
         faces.Add(v0);
         faces.Add(v1);
@@ -208,10 +208,10 @@ public struct VMesh
     }
     public void AddQuadFlipped(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3, Vector3 normal)
     {
-        int v0 = AddVert(VoxelWorld.TransformPoint(p0));
-        int v1 = AddVert(VoxelWorld.TransformPoint(p1));
-        int v2 = AddVert(VoxelWorld.TransformPoint(p2));
-        int v3 = AddVert(VoxelWorld.TransformPoint(p3));
+        int v0 = AddVert(VoxelWorld.TransformPoint(c, p0));
+        int v1 = AddVert(VoxelWorld.TransformPoint(c, p1));
+        int v2 = AddVert(VoxelWorld.TransformPoint(c, p2));
+        int v3 = AddVert(VoxelWorld.TransformPoint(c, p3));
 
         faces.Add(v2);
         faces.Add(v1);
@@ -254,8 +254,21 @@ public struct VMap
     public VoxelChunk chunk;
     Color[,,] map;
 
+    bool ready;
+
+    public bool startedGenerating;
+    public bool isReady
+    {
+        get
+        {
+            return ready;
+        }
+    }
+
     public VMap(uint size, VoxelChunk chunk)
     {
+        startedGenerating = false;
+        ready = false;
         this.chunk = chunk;
         this.size = size;
         map = new Color[size, size, size];
@@ -263,6 +276,7 @@ public struct VMap
 
     public void GenMap()
     {
+        startedGenerating = true;
         for (int x = 0; x < size; x++)
         {
             for (int z = 0; z < size; z++)
@@ -290,6 +304,8 @@ public struct VMap
                 }
             }
         }
+
+        ready = true;
     }
 
     public Color GetBlock(Vector3 localPos)
@@ -355,9 +371,9 @@ public struct VDebug
 }
 public struct VThread
 {
-    public static void RunThread(WaitCallback thread)
+    public static void RunThread(WaitCallback thread, object args = null)
     {
-        ThreadPool.QueueUserWorkItem(thread);
+        ThreadPool.QueueUserWorkItem(thread, args);
     }
 }
 
