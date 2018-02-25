@@ -6,7 +6,7 @@ using UnityEngine;
 public class VoxelChunk : MonoBehaviour
 {
     public const int chunkSize = 16;    
-    public const int blocksPerUnit = 2;
+    public const int blocksPerUnit = 1;
 
     public const float worldScale = 5f;
 
@@ -50,7 +50,11 @@ public class VoxelChunk : MonoBehaviour
     void Awake()
     {
         myPosition = transform.position;
-        chunks.Add(myPosition, this);
+
+        if (chunks.ContainsKey(myPosition))
+            chunks[myPosition] = this;
+        else
+            chunks.Add(myPosition, this);
     }
     
     public void CreateMap(object arg)
@@ -67,21 +71,21 @@ public class VoxelChunk : MonoBehaviour
 
         VMesh mesh = new VMesh(this);
         
-        for (int x = 0; x < map.size; x++)
+        for (int x = 0; x <= map.sizeX; x++)
         {
-            for (int y = 0; y < map.size; y++)
+            for (int y = 0; y <= map.sizeY; y++)
             {
-                for (int z = 0; z < map.size; z++)
+                for (int z = 0; z <= map.sizeZ; z++)
                 {
                     Vector3 pos = new Vector3(x, y, z);
-                    Color blockC = map.GetBlock(pos);
+                    var block = map.GetBlock(pos);
 
-                    if (blockC.a == 0) continue;
+                    if (block.isAirBlock) continue;
 
                     Vector3 vertexpos = pos / blocksPerUnit;
-                    mesh.SetDrawingColor(blockC);
+                    //mesh.SetDrawingColor(blockC);
 
-                    if (map.GetBlock(pos + new Vector3(0, 1, 0)).a == 0)
+                    if (map.GetBlock(pos + new Vector3(0, 1, 0)).isAirBlock)
                     {
                         //Top Face
                         mesh.AddQuad(
@@ -89,9 +93,9 @@ public class VoxelChunk : MonoBehaviour
                             vertexpos + new Vector3(0, 1, 1) / blocksPerUnit,
                             vertexpos + new Vector3(1, 1, 1) / blocksPerUnit,
                             vertexpos + new Vector3(1, 1, 0) / blocksPerUnit,
-                            Vector3.up);
+                            Vector3.up, block);
                     }
-                    if (map.GetBlock(pos + new Vector3(0, -1, 0)).a == 0)
+                    if (map.GetBlock(pos + new Vector3(0, -1, 0)).isAirBlock)
                     {
                         //Bottom Face
                         mesh.AddQuadFlipped(
@@ -99,9 +103,9 @@ public class VoxelChunk : MonoBehaviour
                            vertexpos + new Vector3(0, 0, 1) / blocksPerUnit,
                            vertexpos + new Vector3(1, 0, 1) / blocksPerUnit,
                            vertexpos + new Vector3(1, 0, 0) / blocksPerUnit,
-                           Vector3.down);
+                           Vector3.down, block);
                     }
-                    if (map.GetBlock(pos + new Vector3(1, 0, 0)).a == 0)
+                    if (map.GetBlock(pos + new Vector3(1, 0, 0)).isAirBlock)
                     {
                         //Right Face
                         mesh.AddQuadFlipped(
@@ -109,9 +113,9 @@ public class VoxelChunk : MonoBehaviour
                            vertexpos + new Vector3(1, 0, 1) / blocksPerUnit,
                            vertexpos + new Vector3(1, 1, 1) / blocksPerUnit,
                            vertexpos + new Vector3(1, 1, 0) / blocksPerUnit,
-                           Vector3.right);
+                           Vector3.right, block);
                     }
-                    if (map.GetBlock(pos + new Vector3(-1, 0, 0)).a == 0)
+                    if (map.GetBlock(pos + new Vector3(-1, 0, 0)).isAirBlock)
                     {
                         //Left Face
                         mesh.AddQuad(
@@ -119,9 +123,9 @@ public class VoxelChunk : MonoBehaviour
                            vertexpos + new Vector3(0, 0, 1) / blocksPerUnit,
                            vertexpos + new Vector3(0, 1, 1) / blocksPerUnit,
                            vertexpos + new Vector3(0, 1, 0) / blocksPerUnit,
-                           Vector3.left);
+                           Vector3.left, block);
                     }
-                    if (map.GetBlock(pos + new Vector3(0, 0, 1)).a == 0)
+                    if (map.GetBlock(pos + new Vector3(0, 0, 1)).isAirBlock)
                     {
                         //Front Face
                         mesh.AddQuadFlipped(
@@ -129,9 +133,9 @@ public class VoxelChunk : MonoBehaviour
                            vertexpos + new Vector3(0, 1, 1) / blocksPerUnit,
                            vertexpos + new Vector3(1, 1, 1) / blocksPerUnit,
                            vertexpos + new Vector3(1, 0, 1) / blocksPerUnit,
-                           Vector3.forward);
+                           Vector3.forward, block);
                     }
-                    if (map.GetBlock(pos + new Vector3(0, 0, -1)).a == 0)
+                    if (map.GetBlock(pos + new Vector3(0, 0, -1)).isAirBlock)
                     {
                         //Front Face
                         mesh.AddQuad(
@@ -139,7 +143,7 @@ public class VoxelChunk : MonoBehaviour
                            vertexpos + new Vector3(0, 1, 0) / blocksPerUnit,
                            vertexpos + new Vector3(1, 1, 0) / blocksPerUnit,
                            vertexpos + new Vector3(1, 0, 0) / blocksPerUnit,
-                           Vector3.back);
+                           Vector3.back, block);
                     }
                 }
             }
@@ -161,12 +165,17 @@ public class VoxelChunk : MonoBehaviour
     
     public static VoxelChunk GetChunck(Vector3 pos)
     {
-        Vector3 absolutePos = new Vector3(
-            Mathf.Floor(pos.x / chunkSize) * chunkSize,
-            Mathf.Floor(pos.y / chunkSize) * chunkSize,
-            Mathf.Floor(pos.z / chunkSize) * chunkSize);
+        Vector3 absolutePos = ToChunkPos(pos);
 
         if (chunks.ContainsKey(absolutePos)) return chunks[absolutePos];
         return null;
+    }
+
+    public static Vector3 ToChunkPos(Vector3 pos)
+    {
+        return new Vector3(
+            Mathf.Floor(pos.x / chunkSize) * chunkSize,
+            Mathf.Floor(pos.y / chunkSize) * chunkSize,
+            Mathf.Floor(pos.z / chunkSize) * chunkSize);
     }
 }

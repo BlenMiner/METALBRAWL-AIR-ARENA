@@ -10,11 +10,22 @@ public class VoxelWorld : MonoBehaviour
     public static int seed = 0;
 
     static Queue<VoxelChunk> dirtyChuncks = new Queue<VoxelChunk>();
+    static Queue<Vector3> spawnChuncks = new Queue<Vector3>();
 
     public int mapSize = 10;
     public GameObject chunkPrefab;
 
     public Thread mainThread;
+
+    public static Vector3 MapMiddle;
+    public static float MapMiddleDistance;
+
+    public static VBlock AirBlock;
+    public static VBlock GrassBlock;
+    public static VBlock DirtBlock;
+    public static VBlock GravelBlock;
+    public static VBlock WoodBlock;
+    public static VBlock LavaBlock;
 
     private void Awake()
     {
@@ -24,13 +35,27 @@ public class VoxelWorld : MonoBehaviour
             return;
         }
 
+        InitBlocks();
         singleton = this;
+
+        float middle = (mapSize / 2) * VoxelChunk.chunkSize;
+        MapMiddle = new Vector3(middle, 0, middle);
+        MapMiddleDistance = MapMiddle.magnitude / 2f;
 
         mainThread = new Thread(VoxelUpdate);
         mainThread.Start();
     }
+    private void InitBlocks()
+    {
+        AirBlock = new VBlock(0, 0); //Air
+        GrassBlock = new VBlock(2, 0); //Grass
+        DirtBlock = new VBlock(3, 0); //Dirt
+        GravelBlock = new VBlock(0, 0); //Gravel
+        WoodBlock = new VBlock(0, 1); //Wood
+        LavaBlock = new VBlock(1, 0); //Lava
+    }
     
-    IEnumerator Start ()
+    void Start ()
     {
         seed = Random.Range(int.MinValue, int.MaxValue);
         for(int x = 0; x < mapSize; x++)
@@ -46,25 +71,16 @@ public class VoxelWorld : MonoBehaviour
                 }
             }
         }
-
-        yield return 0;
-
-        /*foreach(var c in VoxelChunk.chunks)
-        {
-            VThread.RunThread(c.Value.CreateMap);
-        }
-
-        yield return 0;
-
-        foreach (var c in VoxelChunk.chunks)
-        {
-            VThread.RunThread(c.Value.CreateMesh);
-        }*/
     }
 
     public static void QueueDirtyChunk(VoxelChunk c)
     {
         dirtyChuncks.Enqueue(c);
+    }
+    public static void QueueSpawnChunk(Vector3 pos)
+    {
+        VoxelChunk.chunks.Add(pos, null);
+        spawnChuncks.Enqueue(pos);
     }
 
     private void Update()
@@ -76,6 +92,14 @@ public class VoxelWorld : MonoBehaviour
             if (chunk != null)
                 UpdateChunk(chunk);
         }
+        if (spawnChuncks.Count != 0)
+        {
+            Vector3 spawnPos = spawnChuncks.Dequeue();
+
+            Instantiate(chunkPrefab,
+                        spawnPos,
+                        Quaternion.identity, transform);
+        }
     }
 
     private void VoxelUpdate()
@@ -86,6 +110,8 @@ public class VoxelWorld : MonoBehaviour
             {
                 foreach (var c in VoxelChunk.chunks)
                 {
+                    if (c.Value == null) continue;
+
                     if (!c.Value.map.startedGenerating)
                     {
                         c.Value.CreateMap(null);
@@ -93,15 +119,16 @@ public class VoxelWorld : MonoBehaviour
 
                     if( c.Value.chunkDirty &&
                         c.Value.map.isReady &&
-                        c.Value.chunkReady)
+                        c.Value.chunkReady && 
+                        !c.Value.map.mapEmpty)
                     {
-                        c.Value.CreateMesh(null);
+                        c.Value.CreateMesh(4);
                     }
                 }
             }
             catch { }
 
-            Thread.Sleep(50);
+            Thread.Sleep(30);
         }
     }
 

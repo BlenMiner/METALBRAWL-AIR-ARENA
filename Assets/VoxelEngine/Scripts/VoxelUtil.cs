@@ -109,6 +109,9 @@ public struct VMesh
     public List<int> faces;
     public List<Color> colors;
 
+    public const float offsetError = 0f;
+    public const float offsetUV = 1f / 4f;
+
     Vector3[] _verticies;
     Vector3[] _normals;
     Vector2[] _uvs;
@@ -126,8 +129,11 @@ public struct VMesh
             m.triangles = _faces;
             m.uv = _uvs;
             m.normals = _normals;
-            m.RecalculateNormals();
             m.colors = _colors;
+
+            m.RecalculateNormals();
+            m.RecalculateTangents();
+
             return m;
         }
     }
@@ -176,7 +182,7 @@ public struct VMesh
         drawingColor = c;
     }
 
-    public void AddQuad(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3, Vector3 normal)
+    public void AddQuad(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3, Vector3 normal, VBlock block)
     {
         int v0 = AddVert(VoxelWorld.TransformPoint(c, p0));
         int v1 = AddVert(VoxelWorld.TransformPoint(c, p1));
@@ -191,10 +197,10 @@ public struct VMesh
         faces.Add(v2);
         faces.Add(v3);
 
-        uvs.Add(new Vector2(0, 0));
-        uvs.Add(new Vector2(0, 1));
-        uvs.Add(new Vector2(1, 1));
-        uvs.Add(new Vector2(1, 0));
+        uvs.Add(new Vector2(block.bX + offsetError, block.bY + offsetError));
+        uvs.Add(new Vector2(block.bX + offsetError, block.bY + offsetUV - offsetError));
+        uvs.Add(new Vector2(block.bX + offsetUV - offsetError, block.bY + offsetUV - offsetError));
+        uvs.Add(new Vector2(block.bX + offsetUV - offsetError, block.bY + offsetError));
 
         normals.Add(normal);
         normals.Add(normal);
@@ -206,7 +212,7 @@ public struct VMesh
         colors.Add(drawingColor);
         colors.Add(drawingColor);
     }
-    public void AddQuadFlipped(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3, Vector3 normal)
+    public void AddQuadFlipped(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3, Vector3 normal, VBlock block)
     {
         int v0 = AddVert(VoxelWorld.TransformPoint(c, p0));
         int v1 = AddVert(VoxelWorld.TransformPoint(c, p1));
@@ -221,10 +227,10 @@ public struct VMesh
         faces.Add(v2);
         faces.Add(v0);
 
-        uvs.Add(new Vector2(0, 0));
-        uvs.Add(new Vector2(0, 1));
-        uvs.Add(new Vector2(1, 1));
-        uvs.Add(new Vector2(1, 0));
+        uvs.Add(new Vector2(block.bX + offsetError, block.bY + offsetError));
+        uvs.Add(new Vector2(block.bX + offsetError, block.bY + offsetUV - offsetError));
+        uvs.Add(new Vector2(block.bX + offsetUV - offsetError, block.bY + offsetUV - offsetError));
+        uvs.Add(new Vector2(block.bX + offsetUV - offsetError, block.bY + offsetError));
 
         normals.Add(normal);
         normals.Add(normal);
@@ -247,12 +253,15 @@ public struct VMesh
 }
 public struct VMap
 {
-    public const int undergroundBlocks = 10;
-    public const int montainsMaxHeight = 50;
+    public const int undergroundBlocks = 1;
+    public const int montainsMaxHeight = 60;
 
     public uint size;
     public VoxelChunk chunk;
-    Color[,,] map;
+    VBlock[,,] map;
+
+    public bool mapEmpty;
+    public int sizeX, sizeY, sizeZ;
 
     bool ready;
 
@@ -271,12 +280,19 @@ public struct VMap
         ready = false;
         this.chunk = chunk;
         this.size = size;
-        map = new Color[size, size, size];
-    }
 
+        sizeX = 0;
+        sizeY = 0;
+        sizeZ = 0;
+
+        mapEmpty = true;
+        map = new VBlock[size, size, size];
+    }
+    
     public void GenMap()
     {
         startedGenerating = true;
+        
         for (int x = 0; x < size; x++)
         {
             for (int z = 0; z < size; z++)
@@ -285,21 +301,24 @@ public struct VMap
                     (chunk.myPosition.x + (x / (float)VoxelChunk.blocksPerUnit)) / 30f, 
                     (chunk.myPosition.z + (z / (float)VoxelChunk.blocksPerUnit)) / 30f);
 
-                float noiseg = Mathf.PerlinNoise(
-                    (chunk.myPosition.x + (x / (float)VoxelChunk.blocksPerUnit) + 200) / 30f,
-                    (chunk.myPosition.z + (z / (float)VoxelChunk.blocksPerUnit) + 200) / 30f);
+                float distanceMiddle = Vector3.Distance(
+                       new Vector3(chunk.myPosition.x, 0, chunk.myPosition.z) + (new Vector3(x, 0, z) / VoxelChunk.blocksPerUnit),
+                       VoxelWorld.MapMiddle) / VoxelWorld.MapMiddleDistance;
 
-                float noiseb = Mathf.PerlinNoise(
-                    (chunk.myPosition.x + (x / (float)VoxelChunk.blocksPerUnit) + 400) / 30f,
-                    (chunk.myPosition.z + (z / (float)VoxelChunk.blocksPerUnit) + 400) / 30f);
+                distanceMiddle = 1 - distanceMiddle;
 
-                int height = undergroundBlocks + Mathf.FloorToInt(noise * montainsMaxHeight);
+                int height = undergroundBlocks + Mathf.FloorToInt((noise * distanceMiddle) * montainsMaxHeight);
 
                 for (int y = 0; y < size; y++)
                 {
-                    if((y + (chunk.myPosition.y * VoxelChunk.blocksPerUnit)) <= height)
+                    if ((y + (chunk.myPosition.y * VoxelChunk.blocksPerUnit)) < Mathf.FloorToInt(height))
                     {
-                        map[x, y, z] = Color.white;// new Color(noise, noiseg, noiseb);
+                        map[x, y, z] = VoxelWorld.GravelBlock;
+                        mapEmpty = false;
+
+                        if (x > sizeX) sizeX = x;
+                        if (y > sizeY) sizeY = y;
+                        if (z > sizeZ) sizeZ = z;
                     }
                 }
             }
@@ -308,17 +327,19 @@ public struct VMap
         ready = true;
     }
 
-    public Color GetBlock(Vector3 localPos)
+    public VBlock GetBlock(Vector3 localPos)
     {
         Vector3i pos = new Vector3i(localPos);
 
-        if (pos.y < 0) return Color.black;
+        if (pos.y < 0)
+            return VoxelWorld.DirtBlock;
 
-        if (pos.x < 0 || pos.z < 0 ||
+
+        if (pos.x < 0 || pos.z < 0 || pos.y < 0 ||
             pos.y >= size || pos.x >= size || pos.z >= size)
         {
             VoxelChunk c = VoxelChunk.GetChunck(chunk.myPosition + (localPos / VoxelChunk.blocksPerUnit));
-            if (c == null || c == chunk) return new Color();// return Color.white;
+            if (c == null || c == chunk) return VBlock.AirBlock;
             else
             {
                 Vector3 local = (chunk.myPosition + (localPos / VoxelChunk.blocksPerUnit)) - c.myPosition;
@@ -326,7 +347,33 @@ public struct VMap
                 return c.map.GetBlock(local);
             }
         }
+        
         return map[pos.x, pos.y, pos.z];
+    }
+
+    public void SetBlock(Vector3 localPos, VBlock newBlock)
+    {
+        Vector3i pos = new Vector3i(localPos);
+
+        if (pos.y < 0) return;
+
+        if (pos.x < 0 || pos.z < 0 ||
+            pos.y >= size || pos.x >= size || pos.z >= size)
+        {
+            VoxelChunk c = VoxelChunk.GetChunck(chunk.myPosition + (localPos / VoxelChunk.blocksPerUnit));
+            if (c == null || c == chunk) return;
+            else
+            {
+                Vector3 local = (chunk.myPosition + (localPos / VoxelChunk.blocksPerUnit)) - c.myPosition;
+                local *= VoxelChunk.blocksPerUnit;
+
+                c.map.SetBlock(local, newBlock);
+                c.chunkDirty = true;
+                return;
+            }
+        }
+        map[pos.x, pos.y, pos.z] = newBlock;
+        chunk.chunkDirty = true;
     }
 }
 public struct VDebug
@@ -374,6 +421,44 @@ public struct VThread
     public static void RunThread(WaitCallback thread, object args = null)
     {
         ThreadPool.QueueUserWorkItem(thread, args);
+    }
+}
+public struct VBlock
+{
+    public int blockID;
+    public float bX, bY;
+
+    public bool isAirBlock
+    {
+        get
+        {
+            return blockID == 0;
+        }
+    }
+    
+    public static List<VBlock> Blocks = new List<VBlock>();
+    public static VBlock AirBlock
+    {
+        get
+        {
+            return VoxelWorld.AirBlock;
+        }
+    }
+
+    public VBlock(int x, int y)
+    {
+        blockID = Blocks.Count;
+
+        bX = x / 4f;
+        bY = 1f - (y / 4f);
+
+        Blocks.Add(this);
+    }
+    public static VBlock GetBlock(int id)
+    {
+        if (id < 0 || id >= Blocks.Count)
+            return AirBlock;
+        return Blocks[id];
     }
 }
 

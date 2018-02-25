@@ -369,8 +369,6 @@
     <None Include="Assets\PostProcessing\Resources\Shaders\UberSecondPass.cginc" />
     <None Include="Assets\PostProcessing\Utilities\CustomMotionTexture\Shaders\CustomMotionVectorTexture.shader" />
     <None Include="Assets\VoxelEngine\Materials\StdVertexColor.shader" />
-    <None Include="Assets\_Packages (Asset Store)\WilberforceColorbleed\Assets\Shaders\Colorbleed.shader" />
-    <None Include="Assets\_Packages (Asset Store)\WilberforceColorbleed\Documentation\ReadMe.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="GenerateTargetFrameworkMonikerAttribute" />
